@@ -1,34 +1,26 @@
 defmodule Khf2 do
+
   @moduledoc """
   Kemping térképe
-  @author "Farkas Martin <fmartin0120@gmail.com>"
+  @author "Molnár Márk - B44W74 <ranlom01@gmail.com>"
   @date   "2022-09-30"
   ...
   """
 
-  # sor száma (1-től n-ig)
-  @type row :: integer
-  # oszlop száma (1-től m-ig)
-  @type col :: integer
-  # egy parcella koordinátái
-  @type field :: {row, col}
+  @type row   :: integer    # sor száma (1-től n-ig)
+  @type col   :: integer    # oszlop száma (1-től m-ig)
+  @type field :: {row, col} # egy parcella koordinátái
 
-  # a sátrak száma soronként
-  @type tents_count_rows :: [integer]
-  # a sátrak száma oszloponként
-  @type tents_count_cols :: [integer]
+  @type tents_count_rows :: [integer] # a sátrak száma soronként
+  @type tents_count_cols :: [integer] # a sátrak száma oszloponként
 
-  # a fákat tartalmazó parcellák koordinátái lexikálisan rendezve
-  @type trees :: [field]
-  # a feladványleíró hármas
-  @type puzzle_desc :: {tents_count_rows, tents_count_cols, trees}
+  @type trees       :: [field]   # a fákat tartalmazó parcellák koordinátái lexikálisan rendezve
+  @type puzzle_desc :: {tents_count_rows, tents_count_cols, trees} # a feladványleíró hármas
 
-  # a sátorpozíciók iránya: north, east, south, west
-  @type dir :: :n | :e | :s | :w
-  # a sátorpozíciók irányának listája a fákhoz képest
-  @type tent_dirs :: [dir]
+  @type dir       :: :n | :e | :s | :w # a sátorpozíciók iránya: north, east, south, west
+  @type tent_dirs :: [dir]             # a sátorpozíciók irányának listája a fákhoz képest
 
-  @spec to_external(pd :: puzzle_desc, ds :: tent_dirs, file :: String.t()) :: :ok
+  @spec to_external(pd::puzzle_desc, ds::tent_dirs, file::String.t) :: :ok
   # A pd = {rs, cs, ts} feladványleíró és a ds sátorirány-lista alapján
   # a feladvány szöveges ábrázolását írja ki a file fájlba, ahol
   #   rs a sátrak soronkénti számának a listája,
@@ -36,79 +28,82 @@ defmodule Khf2 do
   #   ts a fákat tartalmazó parcellák koordinátájának listája
 
   def to_external(pd, ds, file) do
-    File.rm(file)
-    {:ok, file} = File.open(file, [:write])
-    {rs, cs, _ts} = pd
+    #Kiszedjük az első sort
+    first_row = elem(pd,1);
 
-    matrix =
-      createMatrix(pd)
-      |> delUnusable(pd)
-      |> placeTrees(pd)
-    #IO.inspect(matrix)
-     IO.binwrite(file, createFile(pd, matrix))
+    #Kiszedjük a második sort
+    first_col = elem(pd,0);
+
+    #Mapeljük a fákat és a sátrakat
+    objectMap=createObjectMap(elem(pd,2), ds, length(elem(pd,1)));
+
+    #Elkészítjük a stringet
+    solvationString=createString(objectMap, first_row, first_col);
+
+    #Fileba kiírjuk
+    writeToFile(file,solvationString);
+
   end
 
-  defp createMatrix(pd) do
-    {rs, cs, _ts} = pd
+  #Itt készítjük el a mappelést
+  defp createObjectMap(trees, dirs, row_len) do
+    #Ha nincs fa, akkor üres mappel térünk vissza
+    if trees==[] do
+      %{};
+    else
+      #Az összes fára megcsináljuk
+      for i <- 0..length(trees)-1 do
+        tree=Enum.at(trees,i);
+        #Fa index kiszámítása
+        treeCell= ((elem(tree,0)-1)*row_len)+(elem(tree,1)-1);
 
-    for i <- 1..length(rs) do
-      for j <- 1..length(cs) do
-        # Enum.join([i, j], ",")
-        "-"
-      end
+        #Sátor index és betű beállítás
+        tentCell=case Enum.at(dirs,i) do
+          :n -> {treeCell-row_len, "N"};
+          :s -> {treeCell+row_len, "S"};
+          :e -> {treeCell+1, "E"};
+          :w -> {treeCell-1, "W"};
+        end
+
+        #mapeljük a megkapott infót
+        %{treeCell => "*", elem(tentCell,0)=>elem(tentCell,1)}
+        #mergeljük az összes map-et
+      end|>Enum.reduce(&Map.merge/2);
     end
   end
 
-  defp delUnusable(matrix, pd) do
-    {rs, cs, ts} = pd
+  #Elkészítjük a stringet
+  defp createString(objectMap, first_row, first_col) do
+    col_len=length(first_col);
+    row_len=length(first_row);
 
-    for i <- 1..length(rs) do
-      for j <- 1..length(cs) do
-        if Enum.at(rs, i - 1 ) == 0 do
-          "x"
+    #Azoknak a soroknak az elkészítése amit a first_collal kezdődik és a térkép egy sorával végződik
+    rows=for i <- 0..col_len-1 do
+      #Kiszedjük a számot
+      start_num=Enum.at(first_col,i);
+      #Elkészítjük a térkép sorát
+      row=for j <- (i*row_len)..(((i+1)*row_len)-1)  do
+        #Ha van mappelve rá érték akkor azt, ha nem akkor "-"-t adunk vissza
+        if Map.has_key?(objectMap, j) do
+          objectMap[j];
         else
-          if Enum.at(cs, j - 1) == 0 do
-            "x"
-          else
-            "-"
-          end
+          "-";
         end
       end
+      #Összefűzzük a sort és szétválasztjuk " "-el
+      [start_num | row]|>Enum.join(" ");
     end
+    #Összefűzzük a sorokat és lezárjük \r\n-el
+    [[first_row|>Enum.join(" ")]|rows]|>Enum.join("\r\n");
   end
 
-  defp placeTrees(matrix, pd) do
-    {rs, cs, ts} = pd
-    for r <- 1..length(rs) do
-      for c <- 1..length(cs) do
-        if Enum.member?(ts, {r, c}) do
-          "*"
-        else
-                 getField(matrix, pd ,c,r )
-        end
-      end
-    end
-  end
-  defp getField(matrix, pd, x, y) do
-    {rs, cs, ts} = pd
-
-    Enum.at(matrix, y - 1)
-    |> Enum.at(x - 1)
-  end
-  defp placeTents(pd, ds) do
-    for tent <- ds do
-    end
-  end
-
-  defp createFile(pd, matrix) do
-    {rs, cs, _ts} = pd
-
-    ([Enum.join([" "] ++ cs, " ")] ++
-       for ri <- 1..length(rs) do
-         ([Enum.at(rs, ri - 1)] ++
-            Enum.at(matrix, ri - 1))
-         |> Enum.join(" ")
-       end)
-    |> Enum.join("\n")
+  #Filbeba írás
+  defp writeToFile(file, string) do
+    #megnyitjuk
+    {:ok, file} = File.open(file, [:write]);
+    #beleírjuk
+      IO.binwrite(file, string);
+      #lezárjuk
+      File.close(file);
   end
 end
