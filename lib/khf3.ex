@@ -51,10 +51,21 @@ defmodule Khf3 do
   # kulcs-érték párok, melyekben a kulcs a hiba jellegére utal, az
   # érték pedig a hibahelyeket felsoroló lista (üres, ha nincs hiba)
 
+  def checkSolBool(pd, ds) do
+    {rs, cs, ts} = pd
+    {e_rows, e_cols, e_touch} = check_sol(pd, ds)
+
+    if e_rows == %{err_rows: []} and e_cols == %{err_cols: []} and e_touch == %{err_touch: []} and
+         length(ts) == length(ds) do
+      :ok
+    else
+      :error
+    end
+  end
+
   def check_sol(pd, ds) do
-    tents =
-      getTents(pd, ds)
-      |> IO.inspect(label: "tents")
+    tents = getTents(pd, ds)
+    # |> IO.inspect(label: "tents")
 
     err_rows = checkRows(tents, pd)
     err_cols = checkCols(tents, pd)
@@ -65,7 +76,7 @@ defmodule Khf3 do
   defp getTents(pd, ds) do
     {_rs, _cs, ts} = pd
 
-    if ts != [] do
+    if ds != [] do
       for i <- 0..(length(ds) - 1) do
         tree = Enum.at(ts, i)
 
@@ -76,6 +87,8 @@ defmodule Khf3 do
           :w -> {elem(tree, 0), elem(tree, 1) - 1}
         end
       end
+    else
+      []
     end
   end
 
@@ -103,7 +116,7 @@ defmodule Khf3 do
               end
             end
 
-            #IO.puts("i: #{rowIndex}, r: #{Enum.at(rs, rowIndex - 1)}, c: #{tentCount.(tents)}")
+            # IO.puts("i: #{rowIndex}, r: #{Enum.at(rs, rowIndex - 1)}, c: #{tentCount.(tents)}")
 
             if Enum.at(rs, rowIndex - 1) != tentCount.(tents) do
               rowIndex
@@ -138,7 +151,7 @@ defmodule Khf3 do
               end
             end
 
-            #IO.puts("i: #{colIndex}, r: #{Enum.at(cs, colIndex - 1)}, c: #{tentCount.(tents)}")
+            # IO.puts("i: #{colIndex}, r: #{Enum.at(cs, colIndex - 1)}, c: #{tentCount.(tents)}")
 
             if Enum.at(cs, colIndex - 1) != tentCount.(tents) do
               colIndex
@@ -175,6 +188,96 @@ defmodule Khf3 do
           end
           |> Enum.filter(fn x -> x != nil end)
         end
+    }
+  end
+
+  def checkPartialSolBool(pd, ds) do
+    {rs, cs, ts} = pd
+    {e_rows, e_cols, e_touch} = checkPartialSol(pd, ds)
+
+    if e_rows == %{err_rows: []} and e_cols == %{err_cols: []} and e_touch == %{err_touch: []} do
+      :ok
+    else
+      :error
+    end
+  end
+
+  def checkPartialSol(pd, ds) do
+    tents = getTents(pd, ds)
+    # |> IO.inspect(label: "tents")
+
+    err_rows = checkPartialRows(tents, pd)
+    err_cols = checkPartialCols(tents, pd)
+    err_touch = checkTouch(tents, pd)
+    {err_rows, err_cols, err_touch}
+  end
+
+  defp checkPartialRows(tents, pd) do
+    {rs, _cs, _ts} = pd
+
+    %{
+      :err_rows =>
+        for rowIndex <- 1..length(rs) do
+          # IO.puts("i: #{rowIndex}");
+          if Enum.at(rs, rowIndex - 1) >= 0 do
+            # IO.puts("r: #{Enum.at(rs, rowIndex - 1 )}");
+            tentCount = fn tent ->
+              if tent == nil or tent == [] do
+                0
+              else
+                Enum.count(
+                  tents,
+                  fn cell ->
+                    {r, _c} = cell
+                    r == rowIndex
+                  end
+                )
+              end
+            end
+
+            # IO.puts("i: #{rowIndex}, r: #{Enum.at(rs, rowIndex - 1)}, c: #{tentCount.(tents)}")
+
+            if Enum.at(rs, rowIndex - 1) < tentCount.(tents) do
+              rowIndex
+            end
+          end
+        end
+        |> Enum.reject(fn x -> x == nil end)
+    }
+  end
+
+  defp checkPartialCols(tents, pd) do
+    {_rs, cs, _ts} = pd
+    # IO.inspect(tents)
+    # IO.inspect(cs)
+    %{
+      :err_cols =>
+        for colIndex <- 1..length(cs) do
+          # IO.puts("i: #{colIndex}");
+          if Enum.at(cs, colIndex - 1) >= 0 do
+            # IO.puts("r: #{Enum.at(cs, colIndex - 1 )}");
+            tentCount = fn tent ->
+              if tent == nil or tent == [] do
+                0
+              else
+                Enum.count(
+                  tents,
+                  fn cell ->
+                    {_r, c} = cell
+                    c == colIndex
+                  end
+                )
+              end
+            end
+
+            # IO.puts("i: #{colIndex}, r: #{Enum.at(cs, colIndex - 1)}, c: #{tentCount.(tents)}")
+
+            if Enum.at(cs, colIndex - 1) < tentCount.(tents) do
+              colIndex
+            end
+          end
+        end
+        |> Enum.reject(fn x -> x == nil end)
     }
   end
 end

@@ -39,12 +39,15 @@ defmodule Khf2 do
     # File.rm(file)
     # {:ok, file} = File.open(file, [:write])
 
+    to_external(pd,ds)
+    |> writeToFile(file)
+  end
+
+  def to_external(pd,ds) do
     create_map(pd)
-    # |> IO.inspect( label: "create_map" )
     |> fillMapwTrees(pd)
     |> fillMapwTents(pd, ds)
     |> toMapString(pd)
-    |> writeToFile(file)
   end
 
   defp create_map(pd) do
@@ -57,16 +60,20 @@ defmodule Khf2 do
 
   defp fillMapwTrees(map, pd) do
     {_rows, _clms, ts} = pd
+    if ts == [] do
+      map
+    else
 
     Enum.reduce(ts, map, fn {row, clm}, acc ->
       Map.put(acc, {row, clm}, "*")
     end)
   end
+  end
 
   defp getTents(pd, ds) do
     {_rs, _cs, ts} = pd
 
-    if ts != [] do
+    if ds != [] do
       for i <- 0..(length(ds) - 1) do
         tree = Enum.at(ts, i)
 
@@ -77,8 +84,10 @@ defmodule Khf2 do
           :w -> %{{elem(tree, 0), elem(tree, 1) - 1} => "W"}
         end
       end
+      |> Enum.reduce(&Map.merge/2)
+    else
+      %{}
     end
-    |> Enum.reduce(&Map.merge/2)
   end
   defp fillMapwTents(map, pd, ds) do
     {_rows, _clms, _ts} = pd

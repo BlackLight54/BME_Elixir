@@ -12,6 +12,14 @@
         },
         {
             "type": "mix_task",
+            "name": "mix NHF web test",
+            "request": "launch",
+            "projectDir": "${workspaceRoot}",
+            "task": "run",
+            "taskArgs": ["--no-halt", "nhftest.exs"]
+        },
+        {
+            "type": "mix_task",
             "name": "mix test all",
             "request": "launch",
             "task": "test",
@@ -85,6 +93,23 @@
                 "--trace",
                 "--only",
                 "nhf"
+            ],
+            "startApps": true,
+            "projectDir": "${workspaceRoot}",
+            "requireFiles": [
+                "test/**/test_helper.exs",
+                "test/**/*_test.exs"
+            ]
+        },
+        {
+            "type": "mix_task",
+            "name": "mix test nhf0",
+            "request": "launch",
+            "task": "test",
+            "taskArgs": [
+                "--trace",
+                "--only",
+                "nhf0"
             ],
             "startApps": true,
             "projectDir": "${workspaceRoot}",

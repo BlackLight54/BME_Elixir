@@ -33,7 +33,12 @@ defmodule Nhf1 do
 
   def satrak(pd) do
     {tents_count_rows, tents_count_cols, trees} = pd
-    traverse_solution_graph(pd, trees, 0, [], [])
+    [traverse_solution_graph(pd, trees, 0, [], [])]
+    |> List.flatten()
+    |> Enum.filter(fn x -> x != nil end)
+    |> Enum.filter(fn {res, _} -> res == :ok end)
+    |> Enum.map(fn {_res, dirs} -> dirs end)
+
   end
 
   defp traverse_solution_graph(pd, [curr_tree | tail_trees], solTreeDepth, solutions, tents) do
@@ -42,32 +47,72 @@ defmodule Nhf1 do
 
     # IO.inspect(curr_tree)
     # IO.puts("solTreeDepth: #{solTreeDepth}\n")
-
-    # case solTreeDepth |> rem(4) do
+    if(
+      length(solutions) == length(Enum.uniq(tents)) and
+        Khf3.checkPartialSolBool(pd, solutions) == :ok and
+        true
+    ) do
+      # case solTreeDepth |> rem(4) do
       # 0 ->
-        if curr_row > 1 do
-        traverse_solution_graph(pd, tail_trees, solTreeDepth + 1, solutions ++ [:n], tents ++ [{curr_row - 1, curr_col}])
-        end
+
+      northN = if curr_row > 1 do
+        traverse_solution_graph(
+          pd,
+          tail_trees,
+          solTreeDepth + 1,
+          solutions ++ [:n],
+          tents ++ [{curr_row - 1, curr_col}]
+        )
+      end
+
       # 1 ->
-        if curr_row < length(tents_count_rows) do
-        traverse_solution_graph(pd, tail_trees, solTreeDepth + 1, solutions ++ [:s], tents ++ [{curr_row + 1, curr_col}])
-        end
+      southN = if(curr_row < length(tents_count_rows)) do
+        traverse_solution_graph(
+          pd,
+          tail_trees,
+          solTreeDepth + 1,
+          solutions ++ [:s],
+          tents ++ [{curr_row + 1, curr_col}]
+        )
+      end
+
       # 2 ->
-        if curr_col < length(tents_count_cols) do
-        traverse_solution_graph(pd, tail_trees, solTreeDepth + 1, solutions ++ [:e], tents ++ [{curr_row, curr_col + 1}])
-        end
+      eastN = if curr_col < length(tents_count_cols) do
+        traverse_solution_graph(
+          pd,
+          tail_trees,
+          solTreeDepth + 1,
+          solutions ++ [:e],
+          tents ++ [{curr_row, curr_col + 1}]
+        )
+      end
       # 3 ->
-        if curr_col > 1 do
-        traverse_solution_graph(pd, tail_trees, solTreeDepth + 1, solutions ++ [:w], tents ++ [{curr_row, curr_col - 1}])
-        end
-    # end
+      westN = if curr_col > 1 do
+        traverse_solution_graph(
+          pd,
+          tail_trees,
+          solTreeDepth + 1,
+          solutions ++ [:w],
+          tents ++ [{curr_row, curr_col - 1}]
+        )
+      end
+      [northN, southN, eastN, westN]
+      # end
+    end
+
   end
 
-  defp traverse_solution_graph(pd, [], solTreeDepth, solutions,tents) do
-    IO.puts("Solution:")
+  defp traverse_solution_graph(pd, [], solTreeDepth, solutions, tents) do
     {tents_count_rows, tents_count_cols, trees} = pd
-    IO.inspect(solutions)
-    IO.inspect(tents)
-    IO.inspect(trees)
+    # IO.puts("Solution:")
+    # Khf2.to_external(pd, solutions) |> IO.puts()
+    # IO.inspect(solutions)
+    # IO.inspect(tents, label: "tents")
+    # IO.inspect(trees, label: "trees")
+
+    # Khf3.checkSolBool(pd, solutions)
+    # |> IO.inspect(label: "res")
+
+    {Khf3.checkSolBool(pd, solutions), solutions}
   end
 end
