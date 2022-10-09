@@ -49,8 +49,7 @@ defmodule Nhf1 do
     # IO.puts("solTreeDepth: #{solTreeDepth}\n")
     if(
       length(solutions) == length(Enum.uniq(tents)) and
-        Khf3.checkPartialSolBool(pd, solutions) == :ok and
-        true
+        Khf3.checkPartialSolBool(pd, solutions) == :ok
     ) do
       # case solTreeDepth |> rem(4) do
       # 0 ->
@@ -104,14 +103,18 @@ defmodule Nhf1 do
 
   defp traverse_solution_graph(pd, [], solTreeDepth, solutions, tents) do
     {tents_count_rows, tents_count_cols, trees} = pd
-    # IO.puts("Solution:")
-    # Khf2.to_external(pd, solutions) |> IO.puts()
-    # IO.inspect(solutions)
-    # IO.inspect(tents, label: "tents")
-    # IO.inspect(trees, label: "trees")
+    if Khf3.checkSolBool(pd, solutions) == :ok do
 
-    # Khf3.checkSolBool(pd, solutions)
-    # |> IO.inspect(label: "res")
+      IO.puts("Solution:")
+      Khf2.to_external(pd, solutions) |> IO.puts()
+      IO.inspect(solutions)
+      IO.inspect(tents |> Enum.uniq(), label: "tents")
+      IO.inspect(trees, label: "trees")
+
+      Khf3.checkSolBool(pd, solutions)
+      |> IO.inspect(label: "res")
+    end
+
 
     {Khf3.checkSolBool(pd, solutions), solutions}
   end
