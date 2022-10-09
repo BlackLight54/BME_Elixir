@@ -1,26 +1,34 @@
 defmodule Khf2 do
-
   @moduledoc """
   Kemping térképe
-  @author "Molnár Márk - B44W74 <ranlom01@gmail.com>"
+  @author "Farkas Martin <fmartin0120@gmail.com>"
   @date   "2022-09-30"
   ...
   """
 
-  @type row   :: integer    # sor száma (1-től n-ig)
-  @type col   :: integer    # oszlop száma (1-től m-ig)
-  @type field :: {row, col} # egy parcella koordinátái
+  # sor száma (1-től n-ig)
+  @type row :: integer
+  # oszlop száma (1-től m-ig)
+  @type col :: integer
+  # egy parcella koordinátái
+  @type field :: {row, col}
 
-  @type tents_count_rows :: [integer] # a sátrak száma soronként
-  @type tents_count_cols :: [integer] # a sátrak száma oszloponként
+  # a sátrak száma soronként
+  @type tents_count_rows :: [integer]
+  # a sátrak száma oszloponként
+  @type tents_count_cols :: [integer]
 
-  @type trees       :: [field]   # a fákat tartalmazó parcellák koordinátái lexikálisan rendezve
-  @type puzzle_desc :: {tents_count_rows, tents_count_cols, trees} # a feladványleíró hármas
+  # a fákat tartalmazó parcellák koordinátái lexikálisan rendezve
+  @type trees :: [field]
+  # a feladványleíró hármas
+  @type puzzle_desc :: {tents_count_rows, tents_count_cols, trees}
 
-  @type dir       :: :n | :e | :s | :w # a sátorpozíciók iránya: north, east, south, west
-  @type tent_dirs :: [dir]             # a sátorpozíciók irányának listája a fákhoz képest
+  # a sátorpozíciók iránya: north, east, south, west
+  @type dir :: :n | :e | :s | :w
+  # a sátorpozíciók irányának listája a fákhoz képest
+  @type tent_dirs :: [dir]
 
-  @spec to_external(pd::puzzle_desc, ds::tent_dirs, file::String.t) :: :ok
+  @spec to_external(pd :: puzzle_desc, ds :: tent_dirs, file :: String.t()) :: :ok
   # A pd = {rs, cs, ts} feladványleíró és a ds sátorirány-lista alapján
   # a feladvány szöveges ábrázolását írja ki a file fájlba, ahol
   #   rs a sátrak soronkénti számának a listája,
@@ -28,82 +36,80 @@ defmodule Khf2 do
   #   ts a fákat tartalmazó parcellák koordinátájának listája
 
   def to_external(pd, ds, file) do
-    #Kiszedjük az első sort
-    first_row = elem(pd,1);
+    # File.rm(file)
+    # {:ok, file} = File.open(file, [:write])
 
-    #Kiszedjük a második sort
-    first_col = elem(pd,0);
-
-    #Mapeljük a fákat és a sátrakat
-    objectMap=createObjectMap(elem(pd,2), ds, length(elem(pd,1)));
-
-    #Elkészítjük a stringet
-    solvationString=createString(objectMap, first_row, first_col);
-
-    #Fileba kiírjuk
-    writeToFile(file,solvationString);
-
+    create_map(pd)
+    # |> IO.inspect( label: "create_map" )
+    |> fillMapwTrees(pd)
+    |> fillMapwTents(pd, ds)
+    |> toMapString(pd)
+    |> writeToFile(file)
   end
 
-  #Itt készítjük el a mappelést
-  defp createObjectMap(trees, dirs, row_len) do
-    #Ha nincs fa, akkor üres mappel térünk vissza
-    if trees==[] do
-      %{};
-    else
-      #Az összes fára megcsináljuk
-      for i <- 0..length(trees)-1 do
-        tree=Enum.at(trees,i);
-        #Fa index kiszámítása
-        treeCell= ((elem(tree,0)-1)*row_len)+(elem(tree,1)-1);
+  defp create_map(pd) do
+    {rows, clms, _ts} = pd
 
-        #Sátor index és betű beállítás
-        tentCell=case Enum.at(dirs,i) do
-          :n -> {treeCell-row_len, "N"};
-          :s -> {treeCell+row_len, "S"};
-          :e -> {treeCell+1, "E"};
-          :w -> {treeCell-1, "W"};
-        end
-
-        #mapeljük a megkapott infót
-        %{treeCell => "*", elem(tentCell,0)=>elem(tentCell,1)}
-        #mergeljük az összes map-et
-      end|>Enum.reduce(&Map.merge/2);
+    for row <- 1..length(rows), clm <- 1..length(clms), reduce: %{} do
+      acc -> Map.put(acc, {row, clm}, "-")
     end
   end
 
-  #Elkészítjük a stringet
-  defp createString(objectMap, first_row, first_col) do
-    col_len=length(first_col);
-    row_len=length(first_row);
+  defp fillMapwTrees(map, pd) do
+    {_rows, _clms, ts} = pd
 
-    #Azoknak a soroknak az elkészítése amit a first_collal kezdődik és a térkép egy sorával végződik
-    rows=for i <- 0..col_len-1 do
-      #Kiszedjük a számot
-      start_num=Enum.at(first_col,i);
-      #Elkészítjük a térkép sorát
-      row=for j <- (i*row_len)..(((i+1)*row_len)-1)  do
-        #Ha van mappelve rá érték akkor azt, ha nem akkor "-"-t adunk vissza
-        if Map.has_key?(objectMap, j) do
-          objectMap[j];
-        else
-          "-";
+    Enum.reduce(ts, map, fn {row, clm}, acc ->
+      Map.put(acc, {row, clm}, "*")
+    end)
+  end
+
+  defp getTents(pd, ds) do
+    {_rs, _cs, ts} = pd
+
+    if ts != [] do
+      for i <- 0..(length(ds) - 1) do
+        tree = Enum.at(ts, i)
+
+        case Enum.at(ds, i) do
+          :n -> %{{elem(tree, 0) - 1, elem(tree, 1)} => "N"}
+          :s -> %{{elem(tree, 0) + 1, elem(tree, 1)} => "S"}
+          :e -> %{{elem(tree, 0), elem(tree, 1) + 1} => "E"}
+          :w -> %{{elem(tree, 0), elem(tree, 1) - 1} => "W"}
         end
       end
-      #Összefűzzük a sort és szétválasztjuk " "-el
-      [start_num | row]|>Enum.join(" ");
     end
-    #Összefűzzük a sorokat és lezárjük \r\n-el
-    [[first_row|>Enum.join(" ")]|rows]|>Enum.join("\r\n");
+    |> Enum.reduce(&Map.merge/2)
+  end
+  defp fillMapwTents(map, pd, ds) do
+    {_rows, _clms, _ts} = pd
+    tents = getTents(pd, ds)
+    Map.merge(map, tents, fn _k, _v1, v2 -> v2 end)
   end
 
-  #Filbeba írás
-  defp writeToFile(file, string) do
-    #megnyitjuk
-    {:ok, file} = File.open(file, [:write]);
-    #beleírjuk
-      IO.binwrite(file, string);
-      #lezárjuk
-      File.close(file);
+  defp toMapString(map, pd) do
+    {rows, clms, _ts} = pd
+    "  " <> (
+    [ clms |> Enum.join(" ")
+      | for row <- 1..length(rows) do
+          [
+            rows |> Enum.at(row - 1)
+            | for clm <- 1..length(clms) do
+                map[{row, clm}]
+              end
+          ]
+          |> Enum.join(" ")
+        end
+    ]
+    |> Enum.join("\n"))
+  end
+
+  defp writeToFile(string, file) do
+    # megnyitjuk
+    {:ok, file} = File.open(file, [:write])
+    # beleírjuk
+    IO.binwrite(file, string)
+    IO.write(file, "\r\n")
+    # lezárjuk
+    File.close(file)
   end
 end

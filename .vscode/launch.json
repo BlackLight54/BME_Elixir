@@ -12,7 +12,7 @@
         },
         {
             "type": "mix_task",
-            "name": "mix test",
+            "name": "mix test all",
             "request": "launch",
             "task": "test",
             "taskArgs": [
@@ -23,6 +23,57 @@
             "requireFiles": [
                 "test/**/test_helper.exs",
                 "test/**/*_test.exs"
+            ]
+        },
+        {
+            "type": "mix_task",
+            "name": "mix test khf2",
+            "request": "launch",
+            "task": "test",
+            "taskArgs": [
+                "--trace",
+                "--only",
+                "khf2"
+            ],
+            "startApps": true,
+            "projectDir": "${workspaceRoot}",
+            "requireFiles": [
+                "test/**/test_helper.exs",
+                "test/**/*test.exs"
+            ]
+        },
+        {
+            "type": "mix_task",
+            "name": "mix test khf3",
+            "request": "launch",
+            "task": "test",
+            "taskArgs": [
+                "--trace",
+                "--only",
+                "khf3"
+            ],
+            "startApps": true,
+            "projectDir": "${workspaceRoot}",
+            "requireFiles": [
+                "test/**/test_helper.exs",
+                "test/**/khf3_test.exs"
+            ]
+        },
+        {
+            "type": "mix_task",
+            "name": "mix test khf3_c",
+            "request": "launch",
+            "task": "test",
+            "taskArgs": [
+                "--trace",
+                "--only",
+                "khf3_c"
+            ],
+            "startApps": true,
+            "projectDir": "${workspaceRoot}",
+            "requireFiles": [
+                "test/**/test_helper.exs",
+                "test/**/khf3_test.exs"
             ]
         }
     ]
