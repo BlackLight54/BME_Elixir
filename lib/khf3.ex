@@ -56,7 +56,7 @@ defmodule Khf3 do
     {e_rows, e_cols, e_touch} = check_sol(pd, ds)
 
     if e_rows == %{err_rows: []} and e_cols == %{err_cols: []} and e_touch == %{err_touch: []} and
-         length(ts) == length(ds) do
+        length(ts) == length(getTents(pd,ds) |> Enum.uniq())  do
       :ok
     else
       :error
@@ -195,7 +195,7 @@ defmodule Khf3 do
     {rs, cs, ts} = pd
     {e_rows, e_cols, e_touch} = checkPartialSol(pd, ds)
 
-    if e_rows == %{err_rows: []} and e_cols == %{err_cols: []} and e_touch == %{err_touch: []} do
+    if e_rows == %{err_rows: []} and e_cols == %{err_cols: []} and e_touch == %{err_touch: []} and length(ds) == length(getTents(pd,ds) |> Enum.uniq()) do
       :ok
     else
       :error

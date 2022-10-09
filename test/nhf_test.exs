@@ -1,6 +1,7 @@
+ExUnit.configure seed: 0
+
 defmodule NHFTest do
   use ExUnit.Case
-  @moduletag khf3: true
 
   # setup_all do
   # end
@@ -16,7 +17,7 @@ defmodule NHFTest do
     assert(r === Enum.sort(tss))
   end
 
-  @tag nhf0: true
+  #@tag nhf0: true
   test "nhf_w_0" do
     Nhf1.satrak({[1, 1, 0, 3, 0], [1, 0, 2, 0, 2], [{1, 2}, {3, 3}, {3, 5}, {5, 1}, {5, 5}]})
 
@@ -24,7 +25,7 @@ defmodule NHFTest do
              {[1, 1, 0, 3, 0], [1, 0, 2, 0, 2], [{1, 2}, {3, 3}, {3, 5}, {5, 1}, {5, 5}]}
            ) == [[:e, :s, :n, :n, :n]]
   end
-
+  @tag nhf0: true
   test "nhf_w_1" do
     Nhf1.satrak(
       {[-1, -1, -1, 3, 0], [-1, -2, -2, 0, -2], [{1, 2}, {3, 3}, {3, 5}, {5, 1}, {5, 5}]}
