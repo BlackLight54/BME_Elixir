@@ -177,36 +177,4 @@ defmodule Khf3 do
         end
     }
   end
-
-  defp create_map(pd) do
-    {rows, clms, _ts} = pd
-
-    for row <- 0..length(rows), clm <- 0..length(clms), reduce: %{} do
-      acc -> Map.put(acc, {row, clm}, "-")
-    end
-  end
-
-  defp fillMapwTrees(map, pd) do
-    {_rows, _clms, ts} = pd
-
-    Enum.reduce(ts, map, fn {row, clm}, acc ->
-      Map.put(acc, {row, clm}, "*")
-    end)
-  end
-
-  defp fillMapwTents(map, ds) do
-    Enum.reduce(ds, map, fn {row, clm, dir}, acc ->
-      Map.put(acc, {row, clm}, dir)
-    end)
-  end
-
-  defp toMapString(map, rows, clms) do
-    for row <- 0..length(rows) do
-      for clm <- 0..length(clms) do
-        map |> Map.fetch({row, clm}) |> elem(1)
-      end
-      |> Enum.join(" ")
-    end
-    |> Enum.join("\n")
-  end
 end

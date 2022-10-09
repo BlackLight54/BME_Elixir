@@ -61,7 +61,7 @@
         },
         {
             "type": "mix_task",
-            "name": "mix test khf3_c",
+            "name": "mix test kfh3_c",
             "request": "launch",
             "task": "test",
             "taskArgs": [
@@ -74,6 +74,23 @@
             "requireFiles": [
                 "test/**/test_helper.exs",
                 "test/**/khf3_test.exs"
+            ]
+        },
+        {
+            "type": "mix_task",
+            "name": "mix test nhf",
+            "request": "launch",
+            "task": "test",
+            "taskArgs": [
+                "--trace",
+                "--only",
+                "nhf"
+            ],
+            "startApps": true,
+            "projectDir": "${workspaceRoot}",
+            "requireFiles": [
+                "test/**/test_helper.exs",
+                "test/**/*_test.exs"
             ]
         }
     ]
